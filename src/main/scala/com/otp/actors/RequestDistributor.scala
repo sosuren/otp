@@ -16,12 +16,12 @@ class RequestDistributor (config: Config) extends Actor with ActorLogging {
   val graphService = new GraphService(config.getBoolean(GraphConfigPaths.AutoReloadGraphService))
   graphService.setDefaultRouterId(config.getString(GraphConfigPaths.DefaultRouterId))
 
+  val factory = new InputStreamGraphSource.FileFactory(new File(config.getString(GraphConfigPaths.BasePath)))
+
   config.getStringList(GraphConfigPaths.RouterIds).foreach { routerId =>
     graphService.registerGraph(
       routerId,
-      new InputStreamGraphSource
-        .FileFactory(new File("routers/" + routerId + "/" + InputStreamGraphSource.GRAPH_FILENAME))
-        .createGraphSource(routerId)
+      factory.createGraphSource(routerId)
     )
   }
 
