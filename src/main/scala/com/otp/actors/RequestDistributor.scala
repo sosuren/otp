@@ -6,6 +6,7 @@ import akka.actor.{Props, ActorLogging, Actor}
 import akka.routing.FromConfig
 import com.otp.GraphConfigPaths
 import com.typesafe.config.Config
+import org.opentripplanner.routing.core.RoutingRequest
 import org.opentripplanner.routing.impl.InputStreamGraphSource
 import org.opentripplanner.routing.services.GraphService
 
@@ -28,8 +29,8 @@ class RequestDistributor (config: Config) extends Actor with ActorLogging {
   val workers = context.actorOf(FromConfig.props(Props(classOf[RequestWorker], graphService)), "request-worker")
 
   def receive = {
-    case x =>
-      log.info(s"Distributor received message: $x")
-      workers.forward(x)
+    case routingReq: RoutingRequest =>
+      log.info(s"Distributor received routing request: $routingReq")
+      workers.forward(routingReq)
   }
 }
