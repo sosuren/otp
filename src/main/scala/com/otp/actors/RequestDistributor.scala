@@ -7,6 +7,7 @@ import akka.routing.FromConfig
 import com.otp.GraphConfigPaths
 import com.typesafe.config.Config
 import org.opentripplanner.routing.core.RoutingRequest
+import org.opentripplanner.routing.graph.Graph
 import org.opentripplanner.routing.impl.InputStreamGraphSource
 import org.opentripplanner.routing.services.GraphService
 
@@ -19,14 +20,15 @@ class RequestDistributor (config: Config) extends Actor with ActorLogging {
 
   val factory = new InputStreamGraphSource.FileFactory(new File(config.getString(GraphConfigPaths.BasePath)))
 
-  config.getStringList(GraphConfigPaths.RouterIds).foreach { routerId =>
+  val routerIdToGraphMap: Map[String, Graph] = config.getStringList(GraphConfigPaths.RouterIds).map { routerId =>
     graphService.registerGraph(
       routerId,
       factory.createGraphSource(routerId)
     )
-  }
+    routerId -> graphService.getRouter(routerId).graph
+  }.toMap
 
-  val workers = context.actorOf(FromConfig.props(Props(classOf[RequestWorker], "pdx", graphService.getRouter("pdx").graph)), "request-worker")
+  val workers = context.actorOf(FromConfig.props(Props(classOf[RequestWorker], routerIdToGraphMap)), "request-worker")
 
   def receive = {
     case routingReq: RoutingRequest =>
