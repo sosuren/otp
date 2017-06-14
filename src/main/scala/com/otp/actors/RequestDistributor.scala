@@ -26,7 +26,7 @@ class RequestDistributor (config: Config) extends Actor with ActorLogging {
     )
   }
 
-  val workers = context.actorOf(FromConfig.props(Props(classOf[RequestWorker], graphService)), "request-worker")
+  val workers = context.actorOf(FromConfig.props(Props(classOf[RequestWorker], "pdx", graphService.getRouter("pdx").graph)), "request-worker")
 
   def receive = {
     case routingReq: RoutingRequest =>

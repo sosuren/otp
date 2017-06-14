@@ -2,19 +2,22 @@ package com.otp.actors
 
 import akka.actor.{ActorLogging, Actor}
 import org.opentripplanner.routing.core.RoutingRequest
+import org.opentripplanner.routing.graph.Graph
 import org.opentripplanner.routing.impl.GraphPathFinder
-import org.opentripplanner.routing.services.GraphService
+import org.opentripplanner.standalone.Router
 
 import collection.JavaConverters._
 
-class RequestWorker (gs: GraphService) extends Actor with ActorLogging {
+class RequestWorker (routerId: String, graph: Graph) extends Actor with ActorLogging {
+
+  val router = new Router(routerId, graph)
 
   def receive = {
     case routingReq: RoutingRequest =>
       log.info(s"Worker received routing request: $routingReq")
-      routingReq.setRoutingContext(gs.getRouter("pdx").graph)
-      val paths =  new GraphPathFinder(gs.getRouter("pdx")).getPaths(routingReq)
-      println(
+      routingReq.setRoutingContext(router.graph)
+      val paths =  new GraphPathFinder(router).getPaths(routingReq)
+      val msg =
         s"""
           | ==== **** ====
           | Route From: ${routingReq.from.getCoordinate}
@@ -24,6 +27,6 @@ class RequestWorker (gs: GraphService) extends Actor with ActorLogging {
           | Walking Distances are: ${paths.asScala.map{_.getWalkDistance}.mkString("\t")}
           | ==== !!!! ====
         """.stripMargin
-      )
+      println(msg)
   }
 }
