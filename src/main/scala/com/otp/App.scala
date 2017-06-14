@@ -8,15 +8,19 @@ import org.opentripplanner.routing.core.RoutingRequest
 
 object App {
 
+  /**
+   * Build actor system having one distributor and multiple worker
+   * Distributor actor dispatch route request among workers
+   * Workers loads the otp graph and calculate paths when routing request is received
+   */
   def main(args: Array[String]): Unit = {
 
-    val config = ConfigFactory.load()
-    implicit val system = ActorSystem("otp-system", config)
-
+    val config = ConfigFactory.load() // loads conf file: resources/application.conf
+    implicit val system = ActorSystem("otp-system", config) // initialize actor system
+    // initialize route request distributor
     val requestDistributor = system.actorOf(Props(classOf[RequestDistributor], config), "request-distributor")
-
+    // prepare dummy requests and pass them to distributor
     getDummyRequests(4) foreach { routeRequest =>
-
       requestDistributor ! routeRequest
     }
   }

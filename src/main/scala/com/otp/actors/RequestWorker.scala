@@ -8,6 +8,10 @@ import org.opentripplanner.standalone.Router
 
 import collection.JavaConverters._
 
+/**
+ * Worker to calculate path for routing request
+ * @param routerIdToGraphMap [[ Map[String, Graph] ]] Map having router id mapped to Graph
+ */
 class RequestWorker (routerIdToGraphMap: Map[String, Graph]) extends Actor with ActorLogging {
 
   val routers = for ((k,g) <- routerIdToGraphMap) yield new Router(k, g)
@@ -15,6 +19,8 @@ class RequestWorker (routerIdToGraphMap: Map[String, Graph]) extends Actor with 
   def receive = {
     case routingReq: RoutingRequest =>
       log.info(s"Worker received routing request: $routingReq")
+
+      // find paths in every router and pretty print
       routers foreach { router =>
         routingReq.setRoutingContext(router.graph)
         val paths =  new GraphPathFinder(router).getPaths(routingReq)
